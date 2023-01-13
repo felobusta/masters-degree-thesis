@@ -114,7 +114,21 @@ data %>%
 
 ##some analysis
 
-#correlation between quantitative variables
+#information table 1:
+data %>%
+  select(education_level,religion,
+         rel_status,gender,
+         substance_use,time_cesfam) %>% 
+  lapply(tabyl)-> tablas_todos
+
+rbind(data.frame(var="educación",tablas_todos$education_level),
+data.frame(var="religión",tablas_todos$religion),
+data.frame(var="estado civil",tablas_todos$rel_status),
+data.frame(var="género",tablas_todos$gender),
+data.frame(var="uso de sustancias",tablas_todos$substance_use),
+data.frame(var="tiempo cesfam",tablas_todos$time_cesfam))
+
+#correlation between quantitative variables - information table 2
 res2 <- rcorr(as.matrix(data %>% 
                           dplyr::select(prom_stigm,
                                  suma_disc,
@@ -124,12 +138,14 @@ res2 <- rcorr(as.matrix(data %>%
 
 res2
 
-#correlation between ítems and the scale
+#this is for reliability
+#correlation between ítems and the scale - information table 2
 corr.items.stigma <- rcorr(as.matrix(data %>% 
                           dplyr::select(starts_with("a_"))),type = "spearman")
 
 corr.items.stigma
 
+#check "tesis_table exploratory.R" to see if data is normal or not, but is not normal and we want to be a little bit more conservative about our analysis so we go with wilcox
 #check differences between groups - non-parametric test
 #main variable (mean stigma, sum discrimination): 
 lapply(data %>% 
@@ -152,15 +168,12 @@ lapply(data %>%
 lapply(data %>% 
          select(time_cesfam,substance_use,gender),
        function(x) wilcox.test(data_SEM$age~factor(x)))
-       
-
-      
+            
 #means and percentages
 #if you are reading this, this code is not the best way to get multiple means and frequencies, it's actually a really bad way because you are going to use too much code
-       
 ############## DATA MEAN perceived provider stigma and frequencies ############
 
-#get mean
+#get means for table 4
 lapply(data %>%
          select(education_level,religion,
                 rel_status,gender,
@@ -220,6 +233,7 @@ estigma_mean_freq %>% writexl::write_xlsx("estigma promedios frecuencias.xlsx")
 
 
 ############## we do the same for discrimination ############
+#get means for table 4
 
 lapply(data %>%
          select(education_level,religion,
@@ -275,9 +289,8 @@ rbind(data.frame(group=vector_a,
 
 internalizado_mean_freq %>% writexl::write_xlsx("internalizado promedios frecuencias.xlsx")
        
-       
 #######medias por item prom_stigm######
-
+#get means for appendix
 data %>% 
   summarise(mean(prom_stigm,na.rm=T),
             median(prom_stigm,na.rm=T))
@@ -346,22 +359,14 @@ cbind(data.frame(respuestas_totales_internalizado),data.frame(medias_items_inter
  
 library(fastDummies)
 data %>% 
-  select(
-         -rel_status,
-         -time_cesfam,
-         -education_level,
-         -suma_stigm, 
-         -prom_stigm,
-         -suma_disc,
-         -prom_disc, 
-         -suma_ghq) %>% 
-  dummy_cols(select_columns = c("rel_status4",
+  select(-suma_stigm,-prom_stigm,-suma_disc,-suma_GHQ) %>% #leave out variables not used in SEM
+  dummy_cols(select_columns = c("rel_status", #select non-latent variables (observed variables) as dummy variables
                                 "gender",
-                                "religion2",
-                                "time_cesfam5",
-                                "substance_abuse2",
-                                "education_level3"),
-             remove_first_dummy = TRUE,
+                                "religion",
+                                "time_cesfam",
+                                "substance_abuse",
+                                "education_level"),
+             remove_first_dummy = TRUE, #remove first dummy
              ignore_na = TRUE, 
              remove_selected_columns = TRUE) %>% 
   writexl::write_xlsx("base_sem.xlsx")
