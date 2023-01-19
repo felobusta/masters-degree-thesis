@@ -30,12 +30,32 @@ cronbach_stigma_reverso_corr$r
 alpha_stigma_reverse$item.stats[5]
 alpha_stigma_reverse$alpha.drop[1]
 
-data.frame(corr_item_scale = correlacion_reverso_con_stigma$r[,17][1:16],
-           raw_alfa= alpha_stigma_reverse$alpha.drop[1],
-           std_alfa = alpha_stigma_reverse$alpha.drop[1],
-           item_drop = alpha_stigma_reverse$item.stats[5],
-           46.002-alpha_stigma_reverse$item.stats[6],
-           total_alfa = alpha_stigma_reverse[[1]][1]) %>% 
+#mean item dropped
+
+algo <- c(paste0("a_0",1:9))
+algo2 <- c(paste0("a_",10:16))
+algo3<-c(algo,algo2)
+list()-> mean.drop
+
+for (i in seq(algo3)) {
+  mate <- algo3[-i]
+  data %>% 
+    select(mate) %>%
+    mutate(sum_stigm = rowSums(.[1:15]),
+           mean_stigm = sum_stigm/15) %>% 
+    summarise(por.item = mean(mean_stigm,na.rm=T)) -> datos.mean.stigm
+  print(datos.mean.stigm)->  mean.drop[i]
+}
+
+data.frame(id=algo3,mean=unlist(mean.drop))-> mean.without.item
+
+data.frame(id = mean.without.item$id,
+           corr_item_scale = correlacion_reverso_con_stigma$r[,17][1:16],
+           raw_alfa= alpha_stigma_reverse$alpha.drop$raw_alpha,
+           std_alfa = alpha_stigma_reverse$alpha.drop$std.alpha,
+           item_drop = alpha_stigma_reverse$item.stats$r.drop,
+           mean_item_drop= mean.without.item$mean,
+           total_alfa = alpha_stigma_reverse$total$raw_alpha) %>% 
   writexl::write_xlsx("confiabilidad_basetotal_reverso.xlsx")
   
   
